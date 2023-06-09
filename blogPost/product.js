@@ -35,6 +35,17 @@ const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
 const auth = getAuth(app);
 
+const openCart = document.getElementById("openCart");
+
+openCart.addEventListener("click", () => {
+  var x = document.getElementById("myLinks");
+  if (x.style.display === "block") {
+    x.style.display = "none";
+  } else {
+    x.style.display = "block";
+  }
+});
+
 const Loading = (state) => {
   if (state == true) {
     const loader = document.getElementById("loader");
@@ -76,6 +87,17 @@ get(ref(database, "products/"))
             `;
         product_container.appendChild(productEl);
         Loading(false);
+        productEl.addEventListener("click", () => {
+          // add items as array to localstorage
+          const cartItems = JSON.parse(localStorage.getItem("cartItems"));
+          if (cartItems) {
+            cartItems.push(data[product]);
+            localStorage.setItem("cartItems", JSON.stringify(cartItems));
+            window.location.reload();
+          } else {
+            localStorage.setItem("cartItems", JSON.stringify([data[product]]));
+          }
+        });
       });
     } else {
       const productEl = document.createElement("div");
@@ -97,3 +119,26 @@ get(ref(database, "products/"))
     console.error(error);
     alert(error);
   });
+
+const cartItems = document.getElementById("cartItems");
+
+const itemsToBuy = JSON.parse(localStorage.getItem("cartItems"));
+
+console.log(itemsToBuy);
+
+itemsToBuy.map((item) => {
+  const itemEl = document.createElement("div");
+  itemEl.classList.add("col-3");
+  itemEl.innerHTML = `
+ <div class="row">
+       <div class="product_info">
+                <div class="product_name text-white">${item.name}</div>
+                <div class="product_price text-white">$${item.price}</div>
+                <div class="product_price text-white">${item.brand}</div>
+                <div class="product_price text-white">${item.category}</div>
+                <div class="product_price text-white"${item.color}</div>
+            </div>
+    </div>
+    `;
+  cartItems.appendChild(itemEl);
+});

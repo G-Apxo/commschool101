@@ -34,7 +34,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
 const auth = getAuth(app);
-
+const storage = getStorage(app);
 const productSubmit = document.getElementById("createProd");
 // aq minda event listeneris damateba ro yvelaepri wamoigos
 
@@ -44,24 +44,62 @@ productSubmit.addEventListener("click", (e) => {
   const brand = document.getElementById("brand").value;
   const category = document.getElementById("category").value;
   const color = document.getElementById("color").value;
-  const img = document.getElementById("img").value;
+  const fileInput = document.getElementById("fileInput");
+  const file = fileInput.files[0];
+  console.log(file);
 
-  const uid = Math.floor(Math.random() * 100000000000000000);
-
-  set(ref(database, "products/" + uid), {
-    name: name,
-    price: price,
-    brand: brand,
-    category: category,
-    color: color,
-    img: img,
-    random: uid,
-  })
-    .then(() => {
-      alert("Product Added");
+  let timestamp = new Date().getTime();
+  const fileName = timestamp + file?.name;
+  console.log("test", fileName);
+  if (file === undefined) {
+    const uid = Math.floor(Math.random() * 100000000000000000);
+    set(ref(database, "products/" + uid), {
+      name: name,
+      price: price,
+      brand: brand,
+      category: category,
+      color: color,
+      img: null,
+      random: uid,
     })
-    .catch((error) => {
-      console.error(error);
-      alert(error);
-    });
+      .then(() => {
+        alert("Product Added");
+      })
+      .catch((error) => {
+        console.error(error);
+        alert(error);
+      });
+  } else {
+    const uid = Math.floor(Math.random() * 100000000000000000);
+    const storageRef = sRef(storage, "images/" + fileName);
+    uploadBytes(storageRef, file)
+      .then((snapshot) => {
+        console.log(snapshot);
+        console.log("Uploaded a blob or file!");
+      })
+      .then(() => {
+        getDownloadURL(storageRef).then((url) => {
+          console.log(url);
+          document.getElementById("image").innerHTML = `
+      <img src="${url}" alt="" />
+      `;
+          set(ref(database, "products/" + uid), {
+            name: name,
+            price: price,
+            brand: brand,
+            category: category,
+            color: color,
+            img: url ? url : "",
+            random: uid,
+          })
+            .then(() => {
+              alert("Product Added");
+            })
+            .catch((error) => {
+              console.error(error);
+              alert(error);
+            });
+        });
+      });
+  }
 });
