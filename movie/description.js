@@ -20,54 +20,33 @@ const movieDesc = document.createElement("div");
 // კლასი რომლეიც არის bootstrap კლასი
 movieDesc.classList.add("container");
 
-// აქ უკვე პირდპაირ მაქვს movieData თი წვდომა ობიექტზე რომლეიც გამოიყრუება დაახლოებით
-// {
-//adult: false
-// ​
-// backdrop_path: "/cEyhk8tZWubni71M6plwLMQFOIX.jpg"
-// ​
-// genre_ids: Array(3) [ 28, 80, 53 ]
-// ​
-// id: 385687
-// ​
-// original_language: "en"
-// ​
-// original_title: "Fast X"
-// ​
-// overview: "Over many missions and against impossible odds, Dom Toretto and his family have outsmarted, out-nerved and outdriven every foe in their path. Now, they confront the most lethal opponent they've ever faced: A terrifying threat emerging from the shadows of the past who's fueled by blood revenge, and who is determined to shatter this family and destroy everything—and everyone—that Dom loves, forever."
-// ​
-// popularity: 2667.036
-// ​
-// poster_path: "/1E5baAaEse26fej7uHcjOgEE2t2.jpg"
-// ​
-// release_date: "2023-05-17"
-// ​
-// title: "Fast X"
-// ​
-// video: false
-// ​
-// vote_average: 6.8
-// ​
-// vote_count: 84
-// }
-
 // ამ ობქიეტის ქონის გამო პირდპაირ შემიძლია movieDAta.ნებისმიერი პარამტერი რაცაა მაგის გამახება
 // და რადგანაც მასივი არაა არც foreach მჭირდება და არც map
 // აქედან დავხატეთ უქვე ერტი ფილმის აღწერა
+const clickBtn = () => {
+  const cart = JSON.parse(localStorage.getItem("cart")) || []; // Retrieve existing cart items or initialize an empty array
+  cart.push(movieData); // Add the new item to the cart array
+  localStorage.setItem("cart", JSON.stringify(cart)); // Store the updated cart back in local storage
+};
+
 movieDesc.innerHTML = `
-    <img src="${IMG_PATH + movieData.backdrop_path}" >
-    <div class="row mt-5"> 
-    <div class="col-4">
-    <img src="${IMG_PATH + movieData.poster_path}" >
-    </div>
-    <div class="col-8">
-    <h3 class="text-white">${movieData.title}</h3> 
-    <p class="text-white">${movieData.overview}</p>
-    <p class="text-white">${movieData.original_language}</p>
-    <p class="text-white">${movieData.vote_average}</p>
-    </div>
-    </div>
+    <img src="${IMG_PATH + movieData.backdrop_path}">
+      <div class="row mt-5">
+        <div class="col-4">
+          <img src="${IMG_PATH + movieData.poster_path}">
+        </div>
+        <div class="col-8">
+          <h3 class="text-white">${movieData.title}</h3>
+          <p class="text-white">${movieData.overview}</p>
+          <p class="text-white">${movieData.original_language}</p>
+          <p class="text-white">$ ${movieData.vote_average}</p>
+          <button class="btn btn-primary" onclick=clickBtn() >add to cart</button>
+        </div>
+      </div>
 `;
+
+// on btn click add item to localstorage
+
 // main დივში შვილებად ჩავ უგდეთ დახატული იფორმაცია
 main.appendChild(movieDesc);
 
@@ -144,6 +123,7 @@ function showMovies(movies) {
                     </span>
                     </div>
                 </div>
+
             `;
     // ამით გამოძახებულ main დივს შიგნით შვილებად ვუმატებთ ყველა ელემენტს რომელიც ზემოით დავხატეთ
     similar.appendChild(movieEl);
@@ -230,3 +210,80 @@ const seats = [
 // });
 
 //3) /// რაც ამ გვერდში გვაქვს ეგ უნდა გამოიყენო უბრალოდ async function getMovies(url)  ესენი აღარ გამოიზძახოთ checkout ს გვერდზე
+
+const cartBtn = document.querySelector("#cart");
+const cartItems = document.querySelector("#cartItems");
+const cartShowItems = document.createElement("div");
+const sumItems = document.querySelector("#sumItem");
+const showSumItems = document.createElement("div");
+
+cartBtn.addEventListener("click", () => {
+  cartItems.classList.toggle("active");
+  console.log(cartBtn);
+  const cart = JSON.parse(localStorage.getItem("cart"));
+
+  // from cart array get only vote_average and sum them
+  const sum = cart.reduce((acc, item) => acc + item.vote_average, 0);
+  console.log("sum", sum);
+  const sumHTML = `<h1>ჯამი: ${sum}</h1>`;
+  showSumItems.innerHTML = sumHTML;
+  sumItems.appendChild(showSumItems);
+
+  let cartContent = ""; // Initialize an empty string to accumulate the HTML content
+
+  if (cart.length > 0) {
+    cart.forEach((item, index) => {
+      cartContent += `
+        <div class="row">
+          <div class="col-4">
+            <img src="${IMG_PATH + item.poster_path}" alt="${item.title}" />
+          </div>
+          <div class="col-8">
+            <h1>${item.title}</h1>
+            <p>${item.vote_average}</p>
+            <button class="btn btn-primary remove-btn" data-index="${index}">Remove from cart</button>
+          </div>
+        </div>
+      `; // Modify this line to display the desired information for each item
+    });
+  } else {
+    cartContent = `<h1>კალათა ცარიელია</h1>`;
+  }
+  cartShowItems.innerHTML = cartContent; // Assign the accumulated HTML content to cartShowItems
+
+  console.log("cartShowItems", cartShowItems);
+  cartItems.appendChild(cartShowItems);
+
+  // Add event listeners to the "Remove from cart" buttons
+  const removeButtons = document.querySelectorAll(".remove-btn");
+  removeButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const index = parseInt(button.getAttribute("data-index"));
+      cart.splice(index, 1); // Remove the item from the cart array
+      localStorage.setItem("cart", JSON.stringify(cart)); // Update the cart in localStorage
+
+      // Refresh the cart display
+      cartItems.removeChild(cartShowItems);
+      cartShowItems.innerHTML = "";
+      cart.forEach((item, index) => {
+        cartShowItems.innerHTML += `
+          <div class="row">
+            <div class="col-4">
+              <img src="${IMG_PATH + item.poster_path}" alt="${item.title}" />
+            </div>
+            <div class="col-8">
+              <h1>${item.title}</h1>
+              <p>${item.vote_average}</p>
+              <button class="btn btn-primary remove-btn" data-index="${index}">Remove from cart</button>
+            </div>
+          </div>
+        `;
+      });
+      cartItems.appendChild(cartShowItems);
+
+      // Recalculate the sum
+      const newSum = cart.reduce((acc, item) => acc + item.vote_average, 0);
+      showSumItems.innerHTML = `<h1>ჯამი: ${newSum}</h1>`;
+    });
+  });
+});
